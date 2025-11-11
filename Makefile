@@ -6,28 +6,36 @@
 CXX := g++
 RM := rm -f
 
-CXXFLAGS := -std=c++17 -Wall -Wextra -Werror -O2 -g -MMD -MP
+CXXFLAGS := -std=c++17 -Wall -Wextra -Werror -O2 -g
 LDFLAGS :=
 
 SRCS := $(wildcard *.cpp)
-OBJS := $(SRCS:.cpp=.o)
+# place object files and dependency files under this directory
+DEPDIR := incs
+OBJS := $(patsubst %.cpp,$(DEPDIR)/%.o,$(SRCS))
+# dependency files are stored under $(DEPDIR)
 DEPS := $(OBJS:.o=.d)
 
 TARGET := kalman
 
 .PHONY: all clean fclean re
 
-all: $(TARGET)
+all: $(DEPDIR) $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CXX) $(LDFLAGS) $^ -o $@
 
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(DEPDIR)/%.o: %.cpp | $(DEPDIR)
+	# Generate object file and write dependency file into $(DEPDIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ -MMD -MP -MF $(DEPDIR)/$*.d
 
 # Include auto-generated dependency files (if present). This avoids relinking
 # when nothing has changed that requires a link.
 -include $(DEPS)
+
+# Ensure dependency directory exists before compiling
+$(DEPDIR):
+	mkdir -p $(DEPDIR)
 
 clean:
 	$(RM) $(OBJS) $(DEPS)
