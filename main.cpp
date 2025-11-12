@@ -1,4 +1,4 @@
-#include <iostream>
+ #include <iostream>
 #include <iomanip>
 #include <string>
 #include <chrono>
@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
 
     std::string host = argv[1];
     std::string port = argv[2];
-    std::string handshake = (argc >= 4) ? argv[3] : "START";
+    std::string handshake = (argc >= 4) ? argv[3] : "READY";
 
     UDPClient client(host, port);
 

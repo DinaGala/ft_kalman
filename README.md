@@ -35,23 +35,23 @@ The test harness you mentioned is `imu-sensor-stream`. Start it first. Example c
 
 This will open a UDP listener on port 4242 and wait for a client to connect and perform the handshake.
 
-Run the `kalman` program and pass the sensor-stream host and port. By default the program sends the handshake token `START`. You can override it with a third argument.
+Run the `kalman` program and pass the sensor-stream host and port. By default the program sends the handshake token `START`. You can override it with a third argument; some setups use `READY` instead of `START` as the handshake token.
 
-Example (same machine):
+Example (same machine) using the `READY` token:
 
 ```bash
-./kalman 127.0.0.1 4242 START
+./kalman 127.0.0.1 4242 READY
 ```
 
 Or using `localhost`:
 
 ```bash
-./kalman localhost 4242 START
+./kalman localhost 4242 READY
 ```
 
 ## Handshake and message flow
 
-1. `kalman` sends a handshake message (the default string `START`, or the 3rd CLI argument).
+1. `kalman` sends a handshake message (the default string `START` or another token supplied as the 3rd CLI argument — for example `READY`).
 2. The sensor-stream responds with the first sensor packet. This initial packet contains at least three whitespace-separated floating point numbers representing position (X Y Z). Example:
 
 ```
