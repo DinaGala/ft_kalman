@@ -10,6 +10,23 @@ struct Vec3 {
     double z;
 };
 
+struct ImuMeasurement {
+    double timestamp;
+    Vec3 acceleration;
+    Vec3 direction;   // Euler angles (rad)
+};
+
+struct GpsMeasurement {
+    double timestamp;
+    Vec3 position;
+};
+
+struct InitMeasurement {
+    double timestamp;
+    Vec3 position;
+    double speed;     // m/s
+};
+
 // Parse whitespace separated doubles from a message. Returns optional Vec3 if
 // at least three doubles available. Additional values are ignored.
 std::optional<Vec3> parseVec3(const std::string &msg);

@@ -33,6 +33,7 @@ std::optional<double> parseDouble(const std::string &msg) {
             double v = std::stod(tok, &idx);
             if (idx > 0) return v;
         } catch (const std::exception &) {
+            std::cerr << "Failed to parse double from token: " << tok << std::endl;
             // not a number token, continue
         }
     }

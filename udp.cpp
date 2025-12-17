@@ -8,6 +8,8 @@
 #include <iostream>
 #include <vector>
 #include <arpa/inet.h>
+#include <poll.h>
+#include <errno.h>
 
 UDPClient::UDPClient(const std::string &host, const std::string &port)
     : sockfd_(-1), host_(host), port_(port), remote_addr_len_(0) {
@@ -96,18 +98,15 @@ bool UDPClient::sendMessage(const std::string &msg) const {
 bool UDPClient::receiveMessage(std::string &out, int timeout_ms) const {
     out.clear();
     if (sockfd_ == -1) return false;
+    // Use poll() to wait for readability, then read all available datagrams
+    struct pollfd pfd;
+    pfd.fd = sockfd_;
+    pfd.events = POLLIN;
+    pfd.revents = 0;
 
-    fd_set readfds;
-    FD_ZERO(&readfds);
-    FD_SET(sockfd_, &readfds);
-
-    struct timeval tv;
-    tv.tv_sec = timeout_ms / 1000;
-    tv.tv_usec = (timeout_ms % 1000) * 1000;
-
-    int rv = select(sockfd_ + 1, &readfds, nullptr, nullptr, &tv);
+    int rv = poll(&pfd, 1, timeout_ms);
     if (rv == -1) {
-        perror("select");
+        perror("poll");
         return false;
     }
     if (rv == 0) {
@@ -115,12 +114,37 @@ bool UDPClient::receiveMessage(std::string &out, int timeout_ms) const {
         return false;
     }
 
-    // data available
-    const size_t BUF_SZ = 4096;
+    // One or more datagrams available. Read in a loop using MSG_DONTWAIT to
+    // drain the socket so we don't leave pending messages unread.
+    const size_t BUF_SZ = 8192;
     std::vector<char> buf(BUF_SZ);
-    ssize_t n = recv(sockfd_, buf.data(), buf.size() - 1, 0);
-    if (n <= 0) return false;
-    buf[n] = '\0';
-    out.assign(buf.data(), static_cast<size_t>(n));
-    return true;
+    bool got = false;
+    while (true) {
+        ssize_t n = recv(sockfd_, buf.data(), buf.size() - 1, MSG_DONTWAIT);
+        if (n > 0) {
+            buf[n] = '\0';
+            std::string msg(buf.data(), static_cast<size_t>(n));
+            // print each received message so caller can inspect raw data
+            std::cout << "udp recv: " << msg << std::endl;
+            // store the last received message in out
+            out = msg;
+            got = true;
+            // continue reading until EAGAIN/EWOULDBLOCK
+            continue;
+        }
+        if (n == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+            // no more data
+            break;
+        }
+        // other errors or socket closed
+        if (n == 0) {
+            // socket closed
+            break;
+        }
+        if (n == -1) {
+            perror("recv");
+            break;
+        }
+    }
+    return got;
 }
