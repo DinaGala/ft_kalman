@@ -90,6 +90,7 @@ Remember to free any heap-allocated memory and avoid leaks; using RAII (std::vec
 ## Troubleshooting
 
 - If `make` fails with an unsupported C++ standard, update `CXXFLAGS` in `Makefile` to match your compiler's supported standard (e.g., `-std=c++14` or `-std=c++20`).
+
 - If you see socket errors, ensure `imu-sensor-stream` is running and listening on the correct address and port.
 - Use `strace` if you need low-level debugging of socket calls.
 
